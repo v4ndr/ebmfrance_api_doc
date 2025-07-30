@@ -1,0 +1,172 @@
+openapi: 3.0.3
+info:
+  title: ebmfrance
+  description: >
+    API for accessing ebmfrance clinical practice guidelines. Supports search, filtering, and retrieval of individual guides by ID or facets. Access is secured via an API key.
+  version: 1.0.0
+
+servers:
+  - url: https://www.ebmfrance.net/fr/api/v1
+
+components:
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  parameters:
+    SearchQuery:
+      name: search
+      in: query
+      description: Plain-text search (title, metadatas, content)
+      schema:
+        type: string
+    Theme:
+      name: theme
+      in: query
+      description: Internal thematic classification of the guide (see /themes route)
+      schema:
+        type: string
+    Mesh:
+      name: mesh_term
+      in: query
+      description: List of MESH terms, comma-separated.
+      schema:
+        type: string
+    Icpc2:
+      name: icpc2_code
+      in: query
+      description: List of ICPC2 codes, comma-separated.
+      schema:
+        type: string
+    Icd10:
+      name: icd10_code
+      in: query
+      description: List of ICD10 codes, comma-separated.
+      schema:
+        type: string
+    TermsOperator:
+      name: terms_operator
+      in: query
+      description: Operator to apply between multiple codes or terms (MESH, ICPC2, ICD10) if presents in the query
+      schema:
+        type: string
+        enum: [AND, OR]
+        default: OR
+    Contextualized:
+      name: contextualized
+      in: query
+      description: Indicates whether the guide has been reviewed and adapted by the editorial team.
+      schema:
+        type: boolean
+  schemas:
+    Guide:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "ebm00514"
+        title:
+          type: string
+          example: "Hypothyroïdie"
+        content:
+          type: string
+        theme:
+          type: string
+          example: "Endocrinologie"
+        mesh_terms:
+          type: array
+          items:
+            type: string
+        icpc2_codes:
+          type: array
+          items:
+            type: string
+        icd10_codes:
+          type: array
+          items:
+            type: string
+        publication_date:
+          type: string
+          format: date
+          example: "2024-03-01"
+        last_update_date:
+          type: string
+          format: date
+          example: "2025-07-14"
+        url:
+          type: string
+          example: "https://www.ebmfrance.net/fr/Guidelines/Details/ebm00514"
+        source:
+          type: string
+          example: "HAS"
+        contextualized:
+          type: boolean
+          example: true
+
+paths:
+  /guides:
+    get:
+      summary: Search clinical guidelines using various filters (keywords, codes...)
+      security:
+        - ApiKey: []
+      parameters:
+        - $ref: "#/components/parameters/SearchQuery"
+        - $ref: "#/components/parameters/Theme"
+        - $ref: "#/components/parameters/Mesh"
+        - $ref: "#/components/parameters/Icpc2"
+        - $ref: "#/components/parameters/Icd10"
+        - $ref: "#/components/parameters/TermsOperator"
+        - $ref: "#/components/parameters/Contextualized"
+      responses:
+        "200":
+          description: List of the matching guidelines
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  guides:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Guide"
+
+  /guides/{id}:
+    get:
+      summary: Guideline details by its id
+      security:
+        - ApiKey: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Guide trouvé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guide"
+        "404":
+          description: Guide introuvable
+
+  /themes:
+    get:
+      summary: List of available guide themes
+      description: Returns all thematic categories used to classify clinical guides.
+      security:
+        - ApiKey: []
+      responses:
+        "200":
+          description: List of themes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
