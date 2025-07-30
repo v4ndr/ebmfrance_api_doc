@@ -1,4 +1,4 @@
-# ebmfrance Clinical Practice Guidelines API Documentation
+# ebmfrance API Documentation
 
 This repository hosts the OpenAPI (Swagger) documentation for the ebmfrance API.
 
